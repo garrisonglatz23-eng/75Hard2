@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="75 Hard">
+<meta name="theme-color" content="#f5f0e8">
+<title>75 Hard</title>
+<style>
+:root{
+  --bg:#f5f0e8;--surface:#ffffff;--surface2:#f0ebe0;--border:#e0d8cc;
+  --text:#1a1a1a;--muted:#888;--dim:#ccc;
+  --accent:#c0392b;--blue:#2471a3;--gold:#b7770d;--green:#1e8449;
+  --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:Georgia,serif;overflow:hidden}
+body{display:flex;flex-direction:column}
+#header{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:calc(var(--safe-top) + 12px) 20px 12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+#header-left h1{font-size:20px;font-weight:normal;letter-spacing:-.3px}
+#header-left p{font-size:11px;color:var(--muted);font-family:monospace;letter-spacing:1px;margin-top:2px}
+#day-badge{background:var(--accent);color:#fff;font-family:monospace;font-size:11px;font-weight:bold;padding:4px 10px;border-radius:4px;letter-spacing:1px}
+#nav{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-bottom);box-shadow:0 -1px 3px rgba(0,0,0,.05)}
+.nav-btn{flex:1;background:none;border:none;color:var(--muted);padding:10px 4px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;transition:color .15s}
+.nav-btn.active{color:var(--accent)}
+.nav-icon{font-size:18px;line-height:1}
+#pages{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#pages::-webkit-scrollbar{width:0}
+.page{display:none;padding:20px 16px 40px;max-width:500px;margin:0 auto}
+.page.active{display:block}
+#page-ai{display:none;flex-direction:column;overflow:hidden}
+#page-ai.active{display:flex;flex:1}
+#chat-messages{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
+#chat-messages::-webkit-scrollbar{width:0}
+.chat-msg{max-width:88%;display:flex;flex-direction:column;gap:4px}
+.chat-msg.user{align-self:flex-end}
+.chat-msg.ai{align-self:flex-start}
+.chat-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6}
+.chat-msg.user .chat-bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.chat-msg.ai .chat-bubble{background:var(--surface);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.chat-patch{background:#eafaf1;border:1px solid #a9dfbf;border-radius:8px;padding:7px 12px;margin-top:5px;font-size:11px;font-family:monospace;color:var(--green)}
+.chat-input-row{display:flex;gap:8px;padding:12px 16px;padding-bottom:calc(12px + var(--safe-bottom));background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+#chat-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:13px;padding:10px 16px;font-family:Georgia,serif;resize:none;max-height:100px;line-height:1.4}
+#chat-input:focus{outline:none;border-color:var(--accent)}
+#chat-send{background:var(--accent);border:none;color:#fff;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:auto}
+#chat-send:disabled{opacity:.4}
+.chat-typing{display:flex;gap:4px;align-items:center;padding:10px 14px}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:typingDot 1.2s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes typingDot{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.check-item{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .2s;user-select:none}
+.check-item:last-child{border-bottom:none}
+.check-item.done{opacity:.4}
+.check-box{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--dim);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;color:#fff}
+.check-item.done .check-box{background:var(--green);border-color:var(--green)}
+.check-label{flex:1}
+.check-label strong{font-size:14px;font-weight:normal;display:block}
+.check-label span{font-size:11px;color:var(--muted)}
+.progress-wrap{padding:16px}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;font-family:monospace;color:var(--muted);margin-bottom:8px}
+.progress-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
+.streak-row{display:flex;gap:4px;padding:14px 16px;flex-wrap:wrap}
+.streak-dot{width:10px;height:10px;border-radius:50%;background:var(--border)}
+.streak-dot.done{background:var(--green)}
+.streak-dot.today{background:var(--accent)}
+.sched-item{display:flex;gap:14px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.sched-item:last-child{border-bottom:none}
+.sched-time{font-size:11px;font-family:monospace;color:var(--accent);min-width:56px;padding-top:2px}
+.sched-content strong{font-size:13px;font-weight:normal;display:block;margin-bottom:2px}
+.sched-content span{font-size:11px;color:var(--muted);line-height:1.5}
+.meal-row{padding:14px 16px;border-bottom:1px solid var(--border)}
+.meal-row:last-child{border-bottom:none}
+.meal-label{font-size:10px;font-family:monospace;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.meal-name{font-size:14px;margin-bottom:5px}
+.meal-detail{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+.ingredient-tag{font-size:11px;padding:3px 8px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-family:monospace;display:inline-block;margin:2px}
+.swap-icon{color:var(--gold);margin-left:3px}
+.view-recipe-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;font-family:monospace;padding:5px 12px;border-radius:4px;cursor:pointer;margin-top:8px;letter-spacing:1px}
+.macro-row{display:flex;gap:12px;padding:16px}
+.macro-item{flex:1;text-align:center}
+.macro-val{font-size:20px}
+.macro-unit{font-size:10px;color:var(--muted);font-family:monospace}
+.macro-name{font-size:10px;color:var(--muted);font-family:monospace;letter-spacing:1px;margin-top:2px}
+.day-selector{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.day-selector::-webkit-scrollbar{display:none}
+.day-btn{flex-shrink:0;padding:6px 12px;border-radius:5px;font-family:monospace;font-size:11px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);text-align:center;line-height:1.4}
+.day-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.exercise-block{border-bottom:1px solid var(--border)}
+.exercise-block:last-child{border-bottom:none}
+.exercise-header{padding:12px 16px}
+.exercise-name{font-size:14px;margin-bottom:3px}
+.exercise-meta{font-size:11px;color:var(--muted);font-family:monospace}
+.exercise-note{font-size:11px;color:var(--gold);margin-top:3px;line-height:1.5}
+.ex-tag{font-size:9px;font-family:monospace;letter-spacing:1px;padding:2px 6px;border-radius:3px;font-weight:bold;margin-left:6px;vertical-align:middle}
+.tag-power{background:#fef9e7;color:var(--gold);border:1px solid #f9e79f}
+.tag-strength{background:#fdedec;color:var(--accent);border:1px solid #f1948a}
+.tag-accessory{background:#eaf4fb;color:var(--blue);border:1px solid #aed6f1}
+.sets-list{padding:0 16px 12px;display:flex;flex-direction:column;gap:6px}
+.set-row{display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:6px;padding:6px 10px}
+.set-num{font-size:11px;font-family:monospace;color:var(--muted);min-width:24px}
+.set-input{background:transparent;border:none;border-bottom:1px solid var(--dim);color:var(--text);font-size:14px;width:60px;text-align:center;font-family:Georgia,serif;padding:2px 0}
+.set-input:focus{outline:none;border-bottom-color:var(--accent)}
+.set-x{color:var(--muted);font-size:12px}
+.set-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;margin-left:auto;padding:0 4px}
+.add-set-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;background:none;border:1px dashed var(--dim);border-radius:6px;color:var(--muted);cursor:pointer;font-size:12px;font-family:monospace;margin:0 16px 12px;width:calc(100% - 32px);justify-content:center}
+.grocery-cat{font-size:10px;font-family:monospace;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin:20px 0 8px}
+.grocery-cat:first-child{margin-top:0}
+.grocery-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.grocery-item:last-child{border-bottom:none}
+.grocery-item.checked{opacity:.35}
+.grocery-item.checked .grocery-text{text-decoration:line-through}
+.g-check{width:18px;height:18px;border-radius:3px;border:1px solid var(--dim);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
+.grocery-item.checked .g-check{background:var(--accent);border-color:var(--accent)}
+.grocery-text{font-size:13px;flex:1}
+.have-badge{font-size:9px;font-family:monospace;color:var(--green);background:#eafaf1;border:1px solid #a9dfbf;padding:2px 6px;border-radius:3px;flex-shrink:0}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:8px;font-size:13px;cursor:pointer;border:none;font-family:Georgia,serif;width:100%}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.section-label{font-size:10px;font-family:monospace;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+.info-row{padding:10px 16px;display:flex;justify-content:space-between;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-key{font-size:12px;color:var(--muted)}
+.info-val{font-size:12px;font-family:monospace}
+.setting-row{margin-bottom:16px}
+.setting-label{font-size:11px;font-family:monospace;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:block}
+.setting-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;padding:10px 14px;font-family:Georgia,serif}
+.setting-input:focus{outline:none;border-color:var(--accent)}
+textarea.setting-input{resize:vertical;min-height:80px}
+.ai-option{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;cursor:pointer}
+.ai-option-name{font-size:14px;margin-bottom:4px}
+.ai-option-why{font-size:12px;color:var(--muted);line-height:1.5}
+.ai-loading{text-align:center;padding:40px 20px;color:var(--muted);font-family:monospace;font-size:12px;letter-spacing:2px}
+.recipe-step{display:flex;gap:14px;margin-bottom:14px}
+.recipe-step-num{width:24px;height:24px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-family:monospace;font-weight:bold;flex-shrink:0;color:#fff}
+.recipe-step-text{font-size:13px;line-height:1.7;padding-top:3px}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:flex-end;justify-content:center}
+#modal-overlay.open{display:flex}
+#modal{background:var(--surface);border-radius:16px 16px 0 0;border:1px solid var(--border);width:100%;max-width:500px;max-height:85vh;display:flex;flex-direction:column;padding-bottom:var(--safe-bottom)}
+#modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+#modal-title{font-size:16px;font-weight:normal}
+#modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0 4px;line-height:1}
+#modal-body{padding:20px;overflow-y:auto;flex:1}
+</style>
+</head>
+<body>
+<div id="header">
+  <div id="header-left"><h1>75 Hard</h1><p id="header-date"></p></div>
+  <div id="day-badge">DAY —</div>
+</div>
+<div id="pages">
+  <div class="page active" id="page-today"></div>
+  <div class="page" id="page-plan"></div>
+  <div class="page" id="page-workout"></div>
+  <div class="page" id="page-grocery"></div>
+  <div class="page" id="page-more"></div>
+</div>
+<div id="page-ai">
+  <div id="chat-messages"></div>
+  <div class="chat-input-row">
+    <textarea id="chat-input" placeholder="Swap a meal, change an exercise, ask anything…" rows="1"></textarea>
+    <button id="chat-send">↑</button>
+  </div>
+</div>
+<div id="nav">
+  <button class="nav-btn active" data-page="today"><span class="nav-icon">✓</span>Today</button>
+  <button class="nav-btn" data-page="plan"><span class="nav-icon">📅</span>Plan</button>
+  <button class="nav-btn" data-page="workout"><span class="nav-icon">💪</span>Workout</button>
+  <button class="nav-btn" data-page="grocery"><span class="nav-icon">🛒</span>Grocery</button>
+  <button class="nav-btn" data-page="more"><span class="nav-icon">⚙️</span>More</button>
+  <button class="nav-btn" data-page="ai"><span class="nav-icon">✦</span>Edit</button>
+</div>
+<div id="modal-overlay">
+  <div id="modal">
+    <div id="modal-header"><span id="modal-title"></span><button id="modal-close">×</button></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+<script>
+var START_DATE = '2026-03-23';
+
+var LUNCH = {
+  name: 'Ground Beef, Rice & Bok Choy Bowl',
+  description: 'Lean ground beef with garlic, ginger and soy. Jasmine rice. Baby bok choy wilted in sesame. Prep all 5 on Sunday.',
+  ingredients: ['180g lean ground beef','jasmine rice (large portion)','baby bok choy','garlic (2 cloves)','soy sauce','sesame oil (small amount)','fresh ginger','rice vinegar'],
+  recipe: [
+    'Cook a large batch of jasmine rice Sunday — 1:1.5 rice to water. Bring to boil, reduce to lowest heat, cover 15 min, do not lift lid.',
+    'Brown 900g ground beef in a hot pan over medium-high. Break up fine. Drain excess fat.',
+    'Add minced garlic and ginger. Cook 1 min. Add soy sauce and rice vinegar. Toss well. Remove from heat.',
+    'In same pan, halve bok choy lengthwise. Add splash of water, cover 2 min. Finish with drops of sesame oil and salt.',
+    'Portion into 5 containers: rice base, beef on top, bok choy alongside. Refrigerate.',
+    'Reheat covered 2 min. Add a dash of soy before eating if needed.'
+  ]
+};
+
+var DINNERS = {
+  1: {name:'Roasted Chicken Legs, Mashed Sweet Potato & Garlic Butter Bok Choy',protein:'Chicken Legs',carb:'Mashed Sweet Potato',veg:'Bok Choy (Bag 1)',flavour:'Garlic Butter & Lemon',description:'Crispy-skinned roasted chicken legs on creamy sweet potato mash with garlic butter bok choy.',ingredients:['2 chicken legs (thigh + drumstick)','2 large sweet potatoes','baby bok choy (bag 1)','butter (1 tbsp)','garlic (3 cloves)','1 lemon','olive oil','salt, pepper, smoked paprika'],recipe:['Preheat oven to 425F. Pat chicken legs completely dry — moisture prevents crispy skin.','Rub with olive oil, salt, pepper, smoked paprika. Place skin-side up on a rack over a baking tray.','Roast 40-45 min until skin is deep golden and internal temp is 165F. Do not open the oven.','Peel and cube sweet potatoes. Boil in salted water 15 min. Drain and steam dry 2 min.','Mash with butter, salt, and a squeeze of lemon.','Halve bok choy. Melt butter in a pan, add sliced garlic 30 sec, add bok choy cut-side down 2 min, flip 1 min.','Plate: mash as base, chicken on top, bok choy alongside. Squeeze lemon over everything.']},
+  2: {name:'Gochujang Baked Salmon with Rice & Broccoli',protein:'Salmon Fillet',carb:'Jasmine Rice',veg:'Broccoli',flavour:'Gochujang Glaze',description:'Frozen salmon baked under a sticky gochujang glaze. Big rice portion, steamed broccoli.',ingredients:['1 salmon fillet (thawed)','gochujang paste (2 tbsp)','soy sauce (1 tbsp)','honey (1 tbsp)','garlic (1 clove minced)','sesame oil (few drops)','jasmine rice (large portion)','1 large head broccoli'],recipe:['Thaw salmon overnight. Pat completely dry.','Make glaze: whisk gochujang, soy sauce, honey, garlic, and sesame oil.','Place salmon skin-side down on a foil-lined tray. Spoon glaze generously over top.','Bake at 400F for 12-15 min until glaze caramelises and salmon flakes easily.','Steam broccoli 4-5 min. Season with salt.','Serve on large rice base, salmon on top, broccoli alongside. Spoon remaining glaze over everything.']},
+  3: {name:'Pan-Seared Pork Loin with Rice, Spinach & Bok Choy',protein:'Pork Loin',carb:'Jasmine Rice',veg:'Spinach & Bok Choy (Bag 2)',flavour:'Garlic, Soy & Honey',description:'Pork loin sliced thick and seared hard for a crust, finished with a garlic soy honey glaze.',ingredients:['pork loin sliced 2cm thick (~300g)','baby bok choy (bag 2 halved)','spinach (large handful)','garlic (3 cloves)','soy sauce (2 tbsp)','honey (1 tbsp)','rice vinegar (1 tsp)','ginger (1 tsp minced)','jasmine rice (large portion)'],recipe:['Slice pork 2cm thick. Pat dry. Season with salt and pepper only.','Heat pan very hot. Add minimal oil. Sear pork 3 min per side without moving — deep brown crust.','Mix soy sauce, honey, rice vinegar, and ginger in a bowl.','Reduce heat. Add sliced garlic 30 sec. Pour glaze in, bubble and coat pork 1-2 min. Remove and rest 3 min.','Same pan: bok choy cut-side down 2 min, flip, add spinach, toss 1 min until wilted.','Plate over rice. Drizzle everything in the pan over the top.']},
+  4: {name:'Gochujang Ground Beef with Roasted Sweet Potato Wedges & Broccoli',protein:'Ground Beef',carb:'Sweet Potato Wedges',veg:'Broccoli',flavour:'Gochujang & Sesame',description:'Heavily seasoned beef over crispy roasted sweet potato wedges and steamed broccoli.',ingredients:['200g lean ground beef','2 medium sweet potatoes (wedges)','1 large head broccoli','gochujang paste (1.5 tbsp)','garlic (2 cloves)','soy sauce (1 tbsp)','sesame seeds','spring onion'],recipe:['Preheat oven to 425F. Cut sweet potatoes into thick wedges. Toss with minimal oil, salt, paprika.','Spread on tray with space between pieces. Roast 25-30 min flipping halfway.','Steam broccoli 4-5 min. Season with salt.','Brown ground beef in hot pan, drain fat. Add garlic, cook 1 min. Add gochujang and soy, toss to coat.','Plate: wedges as base, beef on top, broccoli alongside. Finish with sesame seeds and spring onion.']},
+  5: {name:'Soy Ginger Braised Chicken Legs with Rice & Stir-Fried Spinach',protein:'Chicken Legs',carb:'Jasmine Rice',veg:'Spinach',flavour:'Soy, Ginger & Garlic',description:'Completely different from Monday — braised low and slow until falling off the bone.',ingredients:['2 chicken legs','soy sauce (3 tbsp)','ginger (2 tbsp minced)','garlic (4 cloves)','rice vinegar (1 tbsp)','honey (1 tbsp)','water (125ml)','large bag spinach','jasmine rice (large portion)'],recipe:['Brown chicken legs skin-side down in a Dutch oven, 4-5 min. Flip 2 min. Remove.','Drain most fat. Add garlic and ginger, cook 1 min. Add soy, vinegar, honey, water. Scrape up brown bits.','Return chicken skin-side up. Bring to gentle simmer. Cover tightly and braise on lowest heat 35-40 min.','Remove lid last 5 min to reduce liquid into a sauce.','Stir fry spinach with garlic 2 min. Season with soy.','Serve over large rice portion. Spoon braising liquid generously over everything.']},
+  6: {name:'Teriyaki Baked Salmon with Rice & Edamame',protein:'Salmon Fillet',carb:'Jasmine Rice',veg:'Edamame',flavour:'Teriyaki',description:'Second salmon — same method, totally different sauce.',ingredients:['1 salmon fillet (thawed)','soy sauce (2 tbsp)','mirin (2 tbsp)','honey (1 tbsp)','garlic (1 clove)','jasmine rice (large portion)','frozen edamame (large portion)','sesame seeds'],recipe:['Thaw salmon. Make teriyaki: simmer soy, mirin, honey 3-4 min until slightly thickened. Add garlic last 30 sec.','Pat salmon dry. Brush glaze generously over top.','Bake at 400F 12-14 min. Brush with more glaze halfway through.','Cook edamame from frozen in salted water 3-4 min. Drain and salt.','Plate on rice base, salmon on top, edamame alongside. Drizzle teriyaki over everything. Sesame seeds to finish.']},
+  7: {name:'Garlic Herb Roasted Pork Loin with Sweet Potato & Asparagus',protein:'Pork Loin',carb:'Roasted Sweet Potato',veg:'Asparagus',flavour:'Garlic & Fresh Herbs',description:'Remaining pork loin roasted whole. One tray, clean Sunday meal.',ingredients:['remaining pork loin (whole)','2 large sweet potatoes (cubed)','1 bunch asparagus','garlic (4 cloves)','fresh rosemary or thyme','olive oil','1 lemon','salt and pepper'],recipe:['Take pork out of fridge 20 min before cooking. Preheat oven to 400F.','Mince garlic, mix with olive oil, chopped herbs, salt, pepper into a paste. Rub all over pork.','Cube sweet potato. Toss with minimal oil and salt. Spread on one side of a large tray. Place pork on the other side.','Roast 20 min. Toss sweet potato. Add asparagus (tossed in oil and salt) to the tray.','Return to oven 15-20 more min until pork hits 145F and sweet potato is caramelised.','Rest pork 8-10 min before slicing. Squeeze lemon over asparagus. Serve.']}
+};
+
+var SCHEDULES = {
+  1:[{time:'6:00am',task:'Wake up',detail:'Bag packed from Sunday night'},{time:'6:15am',task:'Gym — Push Day',detail:'Office basement'},{time:'7:15am',task:'Sauna 10-15 min',detail:'Don\'t push past 7:30'},{time:'7:30am',task:'Shower + Protein shake',detail:'1.5 scoops choc whey + milk + 5g creatine'},{time:'9:00am',task:'Work',detail:'Hit 1L water before lunch'},{time:'12:00pm',task:'Lunch',detail:'Ground beef bowl (prepped Sunday)'},{time:'3:00pm',task:'Snack',detail:'175g Greek yogurt + frozen blueberries'},{time:'5:00pm',task:'Walk home',detail:'4km. Second workout done.'},{time:'7:00pm',task:'Dinner',detail:'Roasted Chicken Legs'},{time:'9:00pm',task:'Read 10 pages',detail:'The Avoidable War — Rudd'},{time:'10:00pm',task:'Progress photo + bed',detail:'Lights out by 10:30'}],
+  2:[{time:'6:00am',task:'Wake up',detail:''},{time:'6:15am',task:'Gym — Pull Day',detail:'DB hang cleans first'},{time:'7:15am',task:'Sauna + Shower',detail:''},{time:'7:30am',task:'Protein shake + creatine',detail:''},{time:'12:00pm',task:'Lunch',detail:'Ground beef bowl'},{time:'3:00pm',task:'Snack',detail:'Greek yogurt + blueberries'},{time:'5:00pm',task:'Walk home',detail:'Outdoor workout done'},{time:'7:00pm',task:'Dinner',detail:'Gochujang Baked Salmon'},{time:'9:00pm',task:'Read 10 pages',detail:''},{time:'10:00pm',task:'Progress photo + bed',detail:''}],
+  3:[{time:'6:00am',task:'Wake up',detail:''},{time:'6:15am',task:'Gym — Legs',detail:'Box jumps first'},{time:'7:15am',task:'Sauna + Shower',detail:''},{time:'7:30am',task:'Protein shake + creatine',detail:''},{time:'12:00pm',task:'Lunch',detail:'Ground beef bowl'},{time:'3:00pm',task:'Snack',detail:'Greek yogurt + blueberries'},{time:'5:00pm',task:'Walk home',detail:'Legs will be sore. Walk anyway.'},{time:'7:00pm',task:'Dinner',detail:'Pan-Seared Pork Loin'},{time:'9:00pm',task:'Read 10 pages',detail:''},{time:'10:00pm',task:'Progress photo + bed',detail:''}],
+  4:[{time:'6:00am',task:'Wake up',detail:''},{time:'6:15am',task:'Gym — Push Day',detail:'Push press to open'},{time:'7:15am',task:'Sauna + Shower',detail:''},{time:'7:30am',task:'Protein shake + creatine',detail:''},{time:'12:00pm',task:'Lunch',detail:'Ground beef bowl'},{time:'3:00pm',task:'Snack',detail:'Greek yogurt + blueberries'},{time:'5:00pm',task:'Walk home',detail:'Outdoor workout done'},{time:'7:00pm',task:'Dinner',detail:'Gochujang Beef & Sweet Potato'},{time:'9:00pm',task:'Read + Essay brainstorm',detail:'First FA essay due Sunday'},{time:'10:00pm',task:'Progress photo + bed',detail:''}],
+  5:[{time:'6:00am',task:'Wake up',detail:''},{time:'6:15am',task:'Gym — Pull Day',detail:''},{time:'7:15am',task:'Sauna + Shower',detail:''},{time:'7:30am',task:'Protein shake + creatine',detail:''},{time:'12:00pm',task:'Lunch',detail:'Last ground beef bowl of the week'},{time:'3:00pm',task:'Snack',detail:'Greek yogurt + blueberries'},{time:'5:00pm',task:'Walk home',detail:'Last weekday walk. Done.'},{time:'7:00pm',task:'Dinner',detail:'Soy Ginger Braised Chicken Legs'},{time:'9:00pm',task:'Read + Essay draft',detail:''},{time:'10:00pm',task:'Progress photo + bed',detail:''}],
+  6:[{time:'7:30am',task:'Wake up',detail:'Don\'t sleep past 8'},{time:'8:00am',task:'Gym — Legs',detail:'Later start, still first'},{time:'9:15am',task:'Shower + Protein shake',detail:''},{time:'10:00am',task:'Outdoor walk/run 45 min',detail:'Pick a new route'},{time:'12:00pm',task:'Lunch',detail:'Simple beef + rice'},{time:'3:00pm',task:'Snack',detail:'Greek yogurt + blueberries'},{time:'7:00pm',task:'Dinner',detail:'Teriyaki Baked Salmon'},{time:'9:00pm',task:'Finish essay draft',detail:'Full draft tonight'},{time:'10:00pm',task:'Progress photo + bed',detail:''}],
+  7:[{time:'7:30am',task:'Wake up',detail:''},{time:'8:00am',task:'Gym — Legs (light)',detail:'Active recovery. Do not go hard.'},{time:'9:15am',task:'Shower + Protein shake',detail:''},{time:'10:00am',task:'Outdoor walk 45 min',detail:''},{time:'11:30am',task:'Grocery run',detail:'List ready. In and out.'},{time:'1:00pm',task:'MEAL PREP 2 hrs',detail:'See prep checklist in More tab'},{time:'3:00pm',task:'Snack',detail:'Greek yogurt + blueberries'},{time:'4:00pm',task:'Finalize + submit essay',detail:'Policy Options or OpenCanada.org'},{time:'7:00pm',task:'Dinner',detail:'Garlic Herb Roasted Pork Loin'},{time:'9:00pm',task:'Read 10 pages',detail:''},{time:'10:00pm',task:'Progress photo + bed',detail:'Bag packed. Week 2 starts tomorrow.'}]
+};
+
+var WORKOUTS = {
+  Push:{note:'Start with push press while CNS is fresh. Rest 2-3 min between power sets, 90 sec on everything else.',exercises:[{name:'Push Press',target:'4x4',type:'power',note:'Dip at the knees and drive explosively. Use your legs to initiate.'},{name:'Bench Press',target:'4x6',type:'strength',note:''},{name:'Incline DB Press',target:'3x10',type:'strength',note:''},{name:'DB Lateral Raises',target:'3x15',type:'accessory',note:''},{name:'Tricep Pushdown',target:'3x12',type:'accessory',note:''},{name:'Explosive Push-Ups',target:'3x8',type:'power',note:'Push hard enough to leave the ground. Move as fast as possible on the way up.'}]},
+  Pull:{note:'Hang cleans train the pulling pattern explosively. Keep weight moderate — speed matters more than load.',exercises:[{name:'DB Hang Clean',target:'4x4',type:'power',note:'Hinge at hips, explosive shrug, catch at shoulders. Reset fully between reps.'},{name:'Barbell Row',target:'4x6',type:'strength',note:''},{name:'Lat Pulldown',target:'3x10',type:'strength',note:''},{name:'Seated Cable Row',target:'3x10',type:'strength',note:''},{name:'Face Pulls',target:'3x15',type:'accessory',note:'External rotation. Shoulder health. Do not skip.'},{name:'Barbell Curl',target:'3x10',type:'accessory',note:''}]},
+  Legs:{note:'Box jumps go first — always. Full rest between jump sets, step down don\'t jump down.',exercises:[{name:'Box Jumps',target:'4x5',type:'power',note:'Full reset between every rep. Step down. Maximum height, soft landing. No box = broad jumps.'},{name:'Back Squat',target:'4x6',type:'strength',note:''},{name:'Romanian Deadlift',target:'3x8',type:'strength',note:''},{name:'Bulgarian Split Squat',target:'3x8 each',type:'strength',note:'These will be hard. Good.'},{name:'Leg Curl',target:'3x12',type:'accessory',note:''},{name:'Calf Raises',target:'4x15',type:'accessory',note:''}]},
+  'Legs (Light)':{note:'Active recovery. Move with quality, not intensity.',exercises:[{name:'Jump Squats',target:'3x6',type:'power',note:'Bodyweight only. Soft landing.'},{name:'Goblet Squat',target:'3x12',type:'strength',note:'Light-moderate. Full depth.'},{name:'Leg Press',target:'3x15',type:'strength',note:'Light, full range.'},{name:'Walking Lunges',target:'3x10 each',type:'accessory',note:''},{name:'Calf Raises',target:'3x20',type:'accessory',note:''}]}
+};
+
+var GROCERY = {
+  'Protein — Buy':[{item:'Lean ground beef — 2kg',have:false},{item:'Greek yogurt — 1.5kg tub',have:false},{item:'Chocolate whey protein — 1 bag',have:false},{item:'Creatine monohydrate — 1 tub',have:false},{item:'2% milk — 2L',have:false}],
+  'Protein — Already Have':[{item:'Chicken legs (thigh + drumstick)',have:true},{item:'Frozen salmon — 2 fillets',have:true},{item:'Pork loin',have:true}],
+  'Produce — Buy':[{item:'Broccoli — 2 large heads',have:false},{item:'Spinach — large bag',have:false},{item:'Asparagus — 1 bunch',have:false},{item:'Garlic — 1 head',have:false},{item:'Fresh ginger — 1 knob',have:false},{item:'Lemons — 2',have:false},{item:'Spring onions — 1 bunch',have:false},{item:'Fresh rosemary or thyme',have:false}],
+  'Produce — Already Have':[{item:'Baby bok choy — 2 bags',have:true},{item:'Sweet potatoes',have:true}],
+  'Carbs':[{item:'Jasmine rice — 3kg bag',have:false},{item:'Bananas — 7',have:false},{item:'Frozen blueberries — large bag',have:false},{item:'Frozen edamame — large bag',have:false}],
+  'Pantry & Sauces':[{item:'Gochujang paste — 1 jar',have:false},{item:'Soy sauce — 1 bottle',have:false},{item:'Mirin — 1 bottle',have:false},{item:'Honey — small jar',have:false},{item:'Rice vinegar — 1 bottle',have:false},{item:'Sesame oil — small bottle',have:false},{item:'Sesame seeds',have:false},{item:'Smoked paprika',have:false},{item:'Butter — small block',have:false},{item:'Olive oil',have:false}]
+};
+
+var PREP_STEPS = [
+  'Cook 10 cups dry jasmine rice (1:1.5 ratio). Portion for 5 lunches plus dinner use.',
+  'Brown 900g ground beef with garlic, ginger, soy sauce, rice vinegar. Portion into 5 lunch containers over rice.',
+  'Wilt bok choy from bag 1 with a drop of sesame oil. Add to 5 lunch containers.',
+  'Marinate chicken legs for Monday: rub with oil, salt, pepper, paprika. Leave skin-side up uncovered in fridge.',
+  'Portion 7x Greek yogurt snacks into small containers.',
+  'Fill and mark your 1L water bottle.',
+  'Set 6:00am alarm. Pack gym bag. Lay out Monday clothes.'
+];
+
+var RULES = [
+  {label:'Diet',detail:'3,000 cal. No cheats. No alcohol.'},
+  {label:'Workout 1',detail:'45 min gym — office basement'},
+  {label:'Workout 2',detail:'45 min walk home — 4km'},
+  {label:'Water',detail:'1 gallon (3.78L)'},
+  {label:'Read',detail:'10 pages minimum'},
+  {label:'Photo',detail:'Progress photo — every day'}
+];
+
+var DAY_NAMES = {1:'Monday',2:'Tuesday',3:'Wednesday',4:'Thursday',5:'Friday',6:'Saturday',7:'Sunday'};
+var DAY_DATES = {1:'Mar 23',2:'Mar 24',3:'Mar 25',4:'Mar 26',5:'Mar 27',6:'Mar 28',7:'Mar 29'};
+var SPLIT_MAP = {1:'Push',2:'Pull',3:'Legs',4:'Push',5:'Pull',6:'Legs',7:'Legs (Light)'};
+var SPLIT_COLOR = {Push:'#c0392b',Pull:'#2471a3',Legs:'#b7770d','Legs (Light)':'#b7770d'};
+
+var appState = {
+  page:'today', planDay:null,
+  apiKey: localStorage.getItem('hd_apiKey')||'',
+  checks: JSON.parse(localStorage.getItem('hd_checks')||'{}'),
+  workoutLogs: JSON.parse(localStorage.getItem('hd_workouts')||'{}'),
+  grocery: JSON.parse(localStorage.getItem('hd_grocery')||'{}'),
+  prepChecks: JSON.parse(localStorage.getItem('hd_prep')||'{}'),
+  generatedWeeks: JSON.parse(localStorage.getItem('hd_genweeks')||'{}'),
+  overrides: JSON.parse(localStorage.getItem('hd_overrides')||'{}'),
+  chatHistory: []
+};
+
+function saveState() {
+  localStorage.setItem('hd_checks', JSON.stringify(appState.checks));
+  localStorage.setItem('hd_workouts', JSON.stringify(appState.workoutLogs));
+  localStorage.setItem('hd_grocery', JSON.stringify(appState.grocery));
+  localStorage.setItem('hd_prep', JSON.stringify(appState.prepChecks));
+  localStorage.setItem('hd_genweeks', JSON.stringify(appState.generatedWeeks));
+  localStorage.setItem('hd_overrides', JSON.stringify(appState.overrides));
+  if (appState.apiKey) localStorage.setItem('hd_apiKey', appState.apiKey);
+}
+
+function getDayNum() {
+  var s = new Date(START_DATE), n = new Date();
+  n.setHours(0,0,0,0); s.setHours(0,0,0,0);
+  return Math.max(1, Math.min(75, Math.floor((n - s) / 86400000) + 1));
+}
+function isPreStart() {
+  var s = new Date(START_DATE), n = new Date();
+  n.setHours(0,0,0,0); s.setHours(0,0,0,0);
+  return n < s;
+}
+function getTodayKey() { return new Date().toISOString().slice(0,10); }
+function getDow() { var d = new Date().getDay(); return d === 0 ? 7 : d; }
+function formatDate() { return new Date().toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'}); }
+function getWeekNum() { return Math.ceil(getDayNum() / 7); }
+
+function getDinner(day) { return Object.assign({}, DINNERS[day], appState.overrides['dinner_'+day]||{}); }
+function getLunch() { return Object.assign({}, LUNCH, appState.overrides['lunch']||{}); }
+function getWorkout(split) {
+  var base = WORKOUTS[split];
+  var ov = appState.overrides['workout_'+split];
+  if (!ov) return base;
+  return Object.assign({}, base, {exercises: base.exercises.map(function(ex, i){ return Object.assign({}, ex, ov[i]||{}); })});
+}
+
+function navigate(page) {
+  appState.page = page;
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelector('[data-page="'+page+'"]').classList.add('active');
+  var pagesEl = document.getElementById('pages');
+  var aiEl = document.getElementById('page-ai');
+  if (page === 'ai') {
+    pagesEl.style.display = 'none';
+    aiEl.style.display = 'flex';
+    renderAI();
+  } else {
+    pagesEl.style.display = '';
+    aiEl.style.display = 'none';
+    var el = document.getElementById('page-'+page);
+    if (el) { el.classList.add('active'); pagesEl.scrollTop = 0; }
+    if (page === 'today') renderToday();
+    else if (page === 'plan') renderPlan();
+    else if (page === 'workout') renderWorkout();
+    else if (page === 'grocery') renderGrocery();
+    else if (page === 'more') renderMore();
+  }
+}
+
+function renderToday() {
+  var pre = isPreStart();
+  var el = document.getElementById('page-today');
+  if (pre) {
+    var html = '<div style="text-align:center;padding:40px 0 24px">'
+      + '<div style="font-size:11px;font-family:monospace;letter-spacing:4px;color:var(--muted);margin-bottom:12px">STARTS TOMORROW</div>'
+      + '<div style="font-size:48px;font-weight:normal;margin-bottom:8px">Day 1</div>'
+      + '<div style="font-size:13px;color:var(--muted)">Monday, March 23</div></div>'
+      + '<div class="section-label">Tonight\'s Prep</div>'
+      + '<div class="card">';
+    for (var i = 0; i < PREP_STEPS.length; i++) {
+      var done = appState.prepChecks['prep_'+i];
+      html += '<div class="check-item '+(done?'done':'')+'" onclick="togglePrepToday(\'prep_'+i+'\')">'
+        + '<div class="check-box">'+(done?'✓':'')+'</div>'
+        + '<div class="check-label"><strong style="font-size:10px;font-family:monospace;color:var(--accent)">STEP '+(i+1)+'</strong>'
+        + '<span>'+PREP_STEPS[i]+'</span></div></div>';
+    }
+    html += '</div><div class="card" style="margin-top:14px"><div style="padding:16px">'
+      + '<div class="section-label" style="margin-bottom:8px">Tomorrow\'s Rules</div>';
+    for (var j = 0; j < RULES.length; j++) {
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">'
+        + '<span style="font-size:13px">'+RULES[j].label+'</span>'
+        + '<span style="font-size:11px;color:var(--muted);font-family:monospace">'+RULES[j].detail+'</span></div>';
+    }
+    html += '</div></div>';
+    el.innerHTML = html;
+    document.getElementById('day-badge').textContent = 'PREP DAY';
+    document.getElementById('header-date').textContent = formatDate();
+    return;
+  }
+
+  var dayNum = getDayNum();
+  var dateKey = getTodayKey();
+  var dow = getDow();
+  var dinner = getDinner(dow) || getDinner(1);
+  var checks = appState.checks[dateKey] || {};
+  var pct = Math.round((dayNum / 75) * 100);
+  var dots = '';
+  for (var di = 1; di <= 75; di++) {
+    var dt = new Date(START_DATE); dt.setDate(dt.getDate() + di - 1);
+    var k = dt.toISOString().slice(0,10);
+    var allDone = appState.checks[k] && RULES.every(function(_, ri){ return appState.checks[k]['rule_'+ri]; });
+    dots += '<div class="streak-dot '+(di===dayNum?'today':allDone?'done':'')+'"></div>';
+  }
+  var html2 = '<div class="section-label">Daily Rules</div><div class="card">';
+  for (var ri = 0; ri < RULES.length; ri++) {
+    var rdone = checks['rule_'+ri];
+    html2 += '<div class="check-item '+(rdone?'done':'')+'" onclick="toggleCheck(\''+dateKey+'\',\'rule_'+ri+'\')">'
+      + '<div class="check-box">'+(rdone?'✓':'')+'</div>'
+      + '<div class="check-label"><strong>'+RULES[ri].label+'</strong><span>'+RULES[ri].detail+'</span></div></div>';
+  }
+  html2 += '</div>'
+    + '<div class="section-label" style="margin-top:20px">Progress</div>'
+    + '<div class="card"><div class="progress-wrap">'
+    + '<div class="progress-label"><span>Day '+dayNum+' of 75</span><span>'+pct+'%</span></div>'
+    + '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>'
+    + '</div><div class="streak-row">'+dots+'</div></div>'
+    + '<div class="section-label" style="margin-top:20px">Today\'s Meals</div>'
+    + '<div class="card">'
+    + '<div class="meal-row"><div class="meal-label">Pre-Workout (6am)</div><div class="meal-name">1 banana</div></div>'
+    + '<div class="meal-row"><div class="meal-label">Post-Workout</div><div class="meal-name">1.5 scoops choc whey + milk + 5g creatine</div></div>'
+    + '<div class="meal-row"><div class="meal-label">Lunch</div><div class="meal-name">'+getLunch().name+'</div></div>'
+    + '<div class="meal-row"><div class="meal-label">Snack (3pm)</div><div class="meal-name">175g Greek yogurt + blueberries</div></div>'
+    + '<div class="meal-row"><div class="meal-label">Dinner</div><div class="meal-name">'+dinner.name+'</div></div>'
+    + '</div>'
+    + '<div class="card" style="margin-top:14px"><div class="macro-row">'
+    + '<div class="macro-item"><div class="macro-val">3,000</div><div class="macro-unit">kcal</div><div class="macro-name">Calories</div></div>'
+    + '<div class="macro-item"><div class="macro-val">190+</div><div class="macro-unit">g</div><div class="macro-name">Protein</div></div>'
+    + '<div class="macro-item"><div class="macro-val">3.78</div><div class="macro-unit">L</div><div class="macro-name">Water</div></div>'
+    + '<div class="macro-item"><div class="macro-val">5</div><div class="macro-unit">g</div><div class="macro-name">Creatine</div></div>'
+    + '</div></div>';
+  el.innerHTML = html2;
+  document.getElementById('day-badge').textContent = 'DAY ' + dayNum;
+  document.getElementById('header-date').textContent = formatDate();
+}
+
+function toggleCheck(dateKey, key) {
+  if (!appState.checks[dateKey]) appState.checks[dateKey] = {};
+  appState.checks[dateKey][key] = !appState.checks[dateKey][key];
+  saveState(); renderToday();
+}
+function togglePrepToday(key) { appState.prepChecks[key] = !appState.prepChecks[key]; saveState(); renderToday(); }
+
+function renderPlan() {
+  var dow = getDow();
+  if (appState.planDay === null) appState.planDay = dow;
+  var d = appState.planDay;
+  var sched = SCHEDULES[d];
+  var dinner = getDinner(d);
+  var lunch = getLunch();
+  var split = SPLIT_MAP[d];
+  var sc = SPLIT_COLOR[split];
+  var html = '<div class="day-selector">';
+  for (var i = 1; i <= 7; i++) {
+    html += '<button class="day-btn '+(appState.planDay===i?'active':'')+'" onclick="setPlanDay('+i+')">'
+      + DAY_NAMES[i].slice(0,3)+'<br><span style="font-size:9px">'+DAY_DATES[i].split(' ')[1]+'</span></button>';
+  }
+  html += '</div><div class="card" style="margin-bottom:14px">'
+    + '<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'
+    + '<span style="font-size:11px;font-family:monospace;letter-spacing:2px;color:var(--muted)">'+DAY_NAMES[d].toUpperCase()+', '+DAY_DATES[d]+'</span>'
+    + '<span style="background:'+sc+'18;color:'+sc+';border:1px solid '+sc+'44;font-family:monospace;font-size:10px;font-weight:bold;padding:3px 8px;border-radius:3px">'+split+'</span>'
+    + '</div>';
+  for (var si = 0; si < sched.length; si++) {
+    html += '<div class="sched-item"><div class="sched-time">'+sched[si].time+'</div>'
+      + '<div class="sched-content"><strong>'+sched[si].task+'</strong>'
+      + (sched[si].detail ? '<span>'+sched[si].detail+'</span>' : '')
+      + '</div></div>';
+  }
+  html += '</div>'
+    + '<div class="section-label">Lunch — All Week</div>'
+    + '<div class="card" style="margin-bottom:14px"><div class="meal-row">'
+    + '<div class="meal-name">'+lunch.name+'</div>'
+    + '<div class="meal-detail">'+lunch.description+'</div><div>';
+  for (var li = 0; li < lunch.ingredients.length; li++) {
+    var ing = lunch.ingredients[li].replace(/'/g, '\\\'');
+    var ln = lunch.name.replace(/'/g, '\\\'');
+    html += '<span class="ingredient-tag" onclick="openSwap(\''+ing+'\',\''+ln+'\')">'+lunch.ingredients[li]+'<span class="swap-icon">↻</span></span>';
+  }
+  html += '</div><button class="view-recipe-btn" onclick="openRecipe(\'lunch\')">View full recipe →</button>'
+    + '</div></div>'
+    + '<div class="section-label">Tonight\'s Dinner</div>'
+    + '<div class="card"><div class="meal-row">'
+    + '<div class="meal-name">'+dinner.name+'</div>'
+    + '<div class="meal-detail">'+dinner.description+'</div>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">'
+    + '<span style="font-size:10px;font-family:monospace;color:var(--gold)">🥩 '+dinner.protein+'</span>'
+    + '<span style="font-size:10px;font-family:monospace;color:var(--blue)">🍚 '+dinner.carb+'</span>'
+    + '<span style="font-size:10px;font-family:monospace;color:var(--green)">🥦 '+dinner.veg+'</span>'
+    + '</div><div>';
+  for (var dii = 0; dii < dinner.ingredients.length; dii++) {
+    var ding = dinner.ingredients[dii].replace(/'/g, '\\\'');
+    var dn = dinner.name.replace(/'/g, '\\\'');
+    html += '<span class="ingredient-tag" onclick="openSwap(\''+ding+'\',\''+dn+'\')">'+dinner.ingredients[dii]+'<span class="swap-icon">↻</span></span>';
+  }
+  html += '</div><button class="view-recipe-btn" onclick="openRecipe('+d+')">View full recipe →</button>'
+    + '</div></div>'
+    + '<p style="font-size:11px;color:var(--muted);text-align:center;font-family:monospace;margin-top:8px">Tap any ingredient for AI swap suggestions</p>';
+  document.getElementById('page-plan').innerHTML = html;
+}
+
+function setPlanDay(d) { appState.planDay = d; renderPlan(); }
+
+function openRecipe(key) {
+  var isLunch = key === 'lunch';
+  var data = isLunch ? getLunch() : getDinner(key);
+  openModal(data.name);
+  var html = '<div style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:16px">'+data.description+'</div>'
+    + '<div class="section-label">Ingredients</div><div style="margin-bottom:18px">';
+  for (var i = 0; i < data.ingredients.length; i++) {
+    html += '<div style="font-size:13px;padding:6px 0;border-bottom:1px solid var(--border);color:var(--muted)">• '+data.ingredients[i]+'</div>';
+  }
+  html += '</div><div class="section-label">Method</div>';
+  for (var j = 0; j < data.recipe.length; j++) {
+    html += '<div class="recipe-step"><div class="recipe-step-num">'+(j+1)+'</div><div class="recipe-step-text">'+data.recipe[j]+'</div></div>';
+  }
+  document.getElementById('modal-body').innerHTML = html;
+}
+
+function renderWorkout() {
+  var dow = getDow();
+  var split = SPLIT_MAP[dow];
+  var workout = getWorkout(split);
+  var dateKey = getTodayKey();
+  var log = appState.workoutLogs[dateKey] || {};
+  var sc = SPLIT_COLOR[split];
+  var tagCls = {power:'tag-power',strength:'tag-strength',accessory:'tag-accessory'};
+  function getPrev(name) {
+    var keys = Object.keys(appState.workoutLogs).sort().reverse();
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (k !== dateKey && appState.workoutLogs[k][name] && appState.workoutLogs[k][name].length) return appState.workoutLogs[k][name];
+    }
+    return null;
+  }
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+    + '<div class="section-label" style="margin-bottom:0">'+DAY_NAMES[dow]+' Workout</div>'
+    + '<span style="background:'+sc+'18;color:'+sc+';border:1px solid '+sc+'44;font-family:monospace;font-size:10px;font-weight:bold;padding:4px 10px;border-radius:4px">'+split+'</span>'
+    + '</div>'
+    + '<p style="font-size:11px;color:var(--muted);font-family:monospace;margin-bottom:12px;line-height:1.6">'+workout.note+'</p>'
+    + '<div style="display:flex;gap:8px;margin-bottom:14px">'
+    + '<span class="ex-tag tag-power">⚡ POWER</span>'
+    + '<span class="ex-tag tag-strength">🏋 STRENGTH</span>'
+    + '<span class="ex-tag tag-accessory">🔧 ACCESSORY</span>'
+    + '</div><div class="card">';
+  for (var ei = 0; ei < workout.exercises.length; ei++) {
+    var ex = workout.exercises[ei];
+    var sets = log[ex.name] || [];
+    var prev = getPrev(ex.name);
+    var prevText = prev && prev.length ? 'Last: '+(prev[prev.length-1].weight||'?')+'lbs x '+(prev[prev.length-1].reps||'?') : 'No data yet';
+    var safeExName = ex.name.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    html += '<div class="exercise-block">'
+      + '<div class="exercise-header">'
+      + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'
+      + '<div class="exercise-name">'+ex.name+'</div>'
+      + '<span class="ex-tag '+tagCls[ex.type]+'">'+ex.type.toUpperCase()+'</span>'
+      + '</div>'
+      + '<div class="exercise-meta">'+ex.target+' · '+prevText+'</div>'
+      + (ex.note ? '<div class="exercise-note">'+ex.note+'</div>' : '')
+      + '</div><div class="sets-list" id="sl-'+ei+'">';
+    for (var si = 0; si < sets.length; si++) {
+      html += '<div class="set-row">'
+        + '<span class="set-num">'+(si+1)+'</span>'
+        + '<input class="set-input" type="number" placeholder="lbs" value="'+(sets[si].weight||'')+'" inputmode="decimal" onchange="updateSet(\''+dateKey+'\',\''+safeExName+'\','+si+',\'weight\',this.value)">'
+        + '<span class="set-x">x</span>'
+        + '<input class="set-input" type="number" placeholder="reps" value="'+(sets[si].reps||'')+'" inputmode="numeric" onchange="updateSet(\''+dateKey+'\',\''+safeExName+'\','+si+',\'reps\',this.value)">'
+        + '<button class="set-del" onclick="delSet(\''+dateKey+'\',\''+safeExName+'\','+si+')">×</button>'
+        + '</div>';
+    }
+    html += '</div>'
+      + '<button class="add-set-btn" onclick="addSet(\''+dateKey+'\',\''+safeExName+'\')">+ Add Set</button>'
+      + '</div>';
+  }
+  html += '</div><p style="font-size:11px;color:var(--muted);text-align:center;font-family:monospace">Saves automatically</p>';
+  document.getElementById('page-workout').innerHTML = html;
+}
+
+function addSet(dateKey, exName) {
+  if (!appState.workoutLogs[dateKey]) appState.workoutLogs[dateKey] = {};
+  if (!appState.workoutLogs[dateKey][exName]) appState.workoutLogs[dateKey][exName] = [];
+  appState.workoutLogs[dateKey][exName].push({weight:'', reps:''});
+  saveState(); renderWorkout();
+}
+function delSet(dateKey, exName, idx) {
+  appState.workoutLogs[dateKey][exName].splice(idx, 1);
+  saveState(); renderWorkout();
+}
+function updateSet(dateKey, exName, idx, field, val) {
+  if (!appState.workoutLogs[dateKey]) appState.workoutLogs[dateKey] = {};
+  if (!appState.workoutLogs[dateKey][exName]) appState.workoutLogs[dateKey][exName] = [];
+  if (!appState.workoutLogs[dateKey][exName][idx]) appState.workoutLogs[dateKey][exName][idx] = {};
+  appState.workoutLogs[dateKey][exName][idx][field] = val;
+  saveState();
+}
+
+function renderGrocery() {
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+    + '<div class="section-label" style="margin-bottom:0">Week 1 Groceries</div>'
+    + '<button class="btn btn-secondary" style="width:auto;padding:6px 12px;font-size:11px;font-family:monospace" onclick="resetGrocery()">Reset</button>'
+    + '</div><p style="font-size:11px;color:var(--muted);font-family:monospace;margin-bottom:14px">'
+    + '<span style="color:var(--green)">■</span> HAVE = on hand · Est. $120-150 CAD</p>';
+  var cats = Object.keys(GROCERY);
+  for (var ci = 0; ci < cats.length; ci++) {
+    var cat = cats[ci];
+    var items = GROCERY[cat];
+    html += '<div class="grocery-cat">'+cat+'</div><div class="card">';
+    for (var ii = 0; ii < items.length; ii++) {
+      var item = items[ii];
+      var gkey = cat+'__'+ii;
+      var checked = appState.grocery[gkey] || item.have;
+      html += '<div class="grocery-item '+(checked?'checked':'')+'" onclick="toggleGrocery(\''+gkey+'\','+item.have+')">'
+        + '<div class="g-check">'+(checked?'✓':'')+'</div>'
+        + '<span class="grocery-text">'+item.item+'</span>'
+        + (item.have ? '<span class="have-badge">HAVE</span>' : '')
+        + '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('page-grocery').innerHTML = html;
+}
+function toggleGrocery(key, isHave) { if (isHave) return; appState.grocery[key] = !appState.grocery[key]; saveState(); renderGrocery(); }
+function resetGrocery() { if (confirm('Reset grocery checks?')) { appState.grocery = {}; saveState(); renderGrocery(); } }
+
+function renderMore() {
+  var weekNum = getWeekNum(), nextWeek = weekNum + 1;
+  var html = '<div class="section-label">Sunday Prep Checklist</div><div class="card" style="margin-bottom:20px">';
+  for (var i = 0; i < PREP_STEPS.length; i++) {
+    var done = appState.prepChecks['prep_'+i];
+    html += '<div class="check-item '+(done?'done':'')+'" onclick="togglePrep(\'prep_'+i+'\')">'
+      + '<div class="check-box">'+(done?'✓':'')+'</div>'
+      + '<div class="check-label"><strong style="font-size:10px;font-family:monospace;color:var(--accent)">STEP '+(i+1)+'</strong>'
+      + '<span>'+PREP_STEPS[i]+'</span></div></div>';
+  }
+  html += '</div>'
+    + '<div class="section-label">Generate Week '+nextWeek+'</div>'
+    + '<div class="card" style="margin-bottom:20px"><div style="padding:16px">'
+    + '<div class="setting-row"><label class="setting-label">Feedback from this week</label>'
+    + '<textarea class="setting-input" id="gen-notes" placeholder="What worked, what to avoid...">'+(localStorage.getItem('hd_genNotes')||'')+'</textarea></div>'
+    + '<button class="btn btn-primary" onclick="generateWeek('+nextWeek+')" id="gen-btn">Generate Week '+nextWeek+' with AI</button>'
+    + (!appState.apiKey ? '<p style="font-size:11px;color:var(--accent);margin-top:8px;font-family:monospace;text-align:center">Set API key below first</p>' : '')
+    + '</div><div id="gen-result"></div></div>'
+    + '<div class="section-label">API Key</div>'
+    + '<div class="card" style="margin-bottom:20px"><div style="padding:16px">'
+    + '<div class="setting-row"><label class="setting-label">Anthropic API Key</label>'
+    + '<input class="setting-input" type="password" id="api-key-input" value="'+appState.apiKey+'" placeholder="sk-ant-..." onchange="saveApiKey(this.value)"></div>'
+    + '<p style="font-size:11px;color:var(--muted);line-height:1.6">Stored locally on device only.</p>'
+    + '</div></div>'
+    + '<div class="section-label">Your Plan</div>'
+    + '<div class="card" style="margin-bottom:20px">'
+    + '<div class="info-row"><span class="info-key">Start</span><span class="info-val">Mar 23, 2026</span></div>'
+    + '<div class="info-row"><span class="info-key">End</span><span class="info-val">Jun 6, 2026</span></div>'
+    + '<div class="info-row"><span class="info-key">Starting weight</span><span class="info-val">229.4 lbs</span></div>'
+    + '<div class="info-row"><span class="info-key">Goal</span><span class="info-val">200 lbs</span></div>'
+    + '<div class="info-row"><span class="info-key">Calories</span><span class="info-val">3,000 / day</span></div>'
+    + '<div class="info-row"><span class="info-key">Day / Week</span><span class="info-val">'+getDayNum()+' / '+weekNum+'</span></div>'
+    + '<div class="info-row"><span class="info-key">Book</span><span class="info-val">The Avoidable War</span></div>'
+    + '<div class="info-row"><span class="info-key">Essay</span><span class="info-val">1/week — Policy Options</span></div>'
+    + '</div>'
+    + '<div class="section-label">Install on Phone</div>'
+    + '<div class="card"><div style="padding:16px"><p style="font-size:13px;color:var(--muted);line-height:1.8">'
+    + '<strong style="color:var(--text)">iPhone:</strong> Safari → Share → Add to Home Screen<br>'
+    + '<strong style="color:var(--text)">Android:</strong> Chrome → menu → Add to Home Screen<br>'
+    + '<strong style="color:var(--text)">Needs HTTPS:</strong> Host on GitHub Pages (free, 10 min).'
+    + '</p></div></div>';
+  document.getElementById('page-more').innerHTML = html;
+  if (appState.generatedWeeks[nextWeek]) showGeneratedWeek(nextWeek, appState.generatedWeeks[nextWeek]);
+}
+function togglePrep(key) { appState.prepChecks[key] = !appState.prepChecks[key]; saveState(); renderMore(); }
+function saveApiKey(val) { appState.apiKey = val.trim(); saveState(); }
+
+function renderAI() {
+  var msgs = document.getElementById('chat-messages');
+  if (!msgs) return;
+  if (appState.chatHistory.length === 0) {
+    var suggestions = ['Swap Wednesday dinner to Japanese','Replace box jumps — no box at gym','400 cal short tonight, what to eat?','Make Friday dinner lighter','Change bench press to DB press'];
+    var html = '<div style="text-align:center;padding:32px 16px 0">'
+      + '<div style="font-size:28px;margin-bottom:12px">✦</div>'
+      + '<div style="font-size:14px;margin-bottom:8px">Your 75 Hard editor</div>'
+      + '<div style="font-size:12px;color:var(--muted);line-height:1.7">Ask me to change anything.<br>I\'ll update the app directly.</div>'
+      + '</div><div style="display:flex;flex-wrap:wrap;gap:8px;padding:24px 0 8px">';
+    for (var i = 0; i < suggestions.length; i++) {
+      html += '<button onclick="sendQuickMsg(\''+suggestions[i].replace(/'/g, "\\'")+'\')" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:11px;font-family:monospace;padding:6px 12px;border-radius:16px;cursor:pointer">'+suggestions[i]+'</button>';
+    }
+    html += '</div>';
+    msgs.innerHTML = html;
+  } else {
+    renderChatMessages();
+  }
+}
+
+function renderChatMessages() {
+  var msgs = document.getElementById('chat-messages');
+  if (!msgs) return;
+  var html = '';
+  for (var i = 0; i < appState.chatHistory.length; i++) {
+    var m = appState.chatHistory[i];
+    if (m.role === 'user') {
+      html += '<div class="chat-msg user"><div class="chat-bubble">'+m.content+'</div></div>';
+    } else {
+      html += '<div class="chat-msg ai"><div class="chat-bubble">'+m.content+'</div>'
+        + (m.patch ? '<div class="chat-patch">✓ Applied: '+m.patch+'</div>' : '')
+        + '</div>';
+    }
+  }
+  msgs.innerHTML = html;
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addTypingIndicator() {
+  var msgs = document.getElementById('chat-messages');
+  var el = document.createElement('div');
+  el.className = 'chat-msg ai'; el.id = 'typing-indicator';
+  el.innerHTML = '<div class="chat-bubble"><div class="chat-typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>';
+  msgs.appendChild(el); msgs.scrollTop = msgs.scrollHeight;
+}
+function removeTypingIndicator() { var el = document.getElementById('typing-indicator'); if (el) el.remove(); }
+
+function sendQuickMsg(text) {
+  var input = document.getElementById('chat-input');
+  if (input) input.value = text;
+  sendChat();
+}
+
+function sendChat() {
+  var input = document.getElementById('chat-input');
+  var text = input ? input.value.trim() : '';
+  if (!text) return;
+  if (!appState.apiKey) { alert('Set your API key in the More tab first.'); return; }
+  input.value = ''; input.style.height = '';
+  var sendBtn = document.getElementById('chat-send');
+  if (sendBtn) sendBtn.disabled = true;
+  appState.chatHistory.push({role:'user', content:text});
+  renderChatMessages();
+  addTypingIndicator();
+  var ctx = {
+    user: {calories:3000, day:getDayNum()},
+    lunch: getLunch().name,
+    dinners: {}, workouts: {}
+  };
+  for (var di = 1; di <= 7; di++) ctx.dinners[DAY_NAMES[di]] = getDinner(di).name;
+  var splitKeys = Object.keys(WORKOUTS);
+  for (var wi = 0; wi < splitKeys.length; wi++) {
+    ctx.workouts[splitKeys[wi]] = getWorkout(splitKeys[wi]).exercises.map(function(e){ return e.name; });
+  }
+  var SYSTEM = 'You are the editor for a 75 Hard app. User: 22yo male, 6\'4", Winnipeg Canada, 3000 cal/day, 190g protein. Loves Korean/Thai/Japanese/Mediterranean. Confident cook. No cottage cheese, boiled eggs, ground turkey. Wants explosive/athletic workouts with power movements and strength training.\n\nCurrent state:\n'+JSON.stringify(ctx)+'\n\nRespond conversationally. If the user wants a change include a patch at the end:\n<patch>{"type":"updateDinner","data":{"day":2,"name":"...","protein":"...","carb":"...","veg":"...","flavour":"...","description":"...","ingredients":[...],"recipe":[...]}}</patch>\nor\n<patch>{"type":"updateLunch","data":{"name":"...","description":"...","ingredients":[...],"recipe":[...]}}</patch>\nor\n<patch>{"type":"updateExercise","data":{"split":"Push","index":0,"name":"...","target":"...","type":"power","note":"..."}}</patch>\nOnly include patch if user is requesting a change.';
+  var messages = [];
+  var hist = appState.chatHistory.slice(-10);
+  for (var hi = 0; hi < hist.length; hi++) {
+    messages.push({role: hist[hi].role === 'ai' ? 'assistant' : 'user', content: hist[hi].content});
+  }
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','x-api-key':appState.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-iap':'true'},
+    body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1000, system:SYSTEM, messages:messages})
+  }).then(function(res) {
+    return res.json().then(function(data) {
+      if (!res.ok) throw new Error(data.error && data.error.message ? data.error.message : 'API error '+res.status);
+      return data;
+    });
+  }).then(function(data) {
+    var responseText = data.content && data.content[0] ? data.content[0].text || '' : '';
+    var patchDescription = null;
+    var patchMatch = responseText.match(/<patch>([\s\S]*?)<\/patch>/);
+    if (patchMatch) {
+      responseText = responseText.replace(/<patch>[\s\S]*?<\/patch>/,'').trim();
+      try { patchDescription = applyPatch(JSON.parse(patchMatch[1].trim())); } catch(e) { console.warn('patch failed', e); }
+    }
+    removeTypingIndicator();
+    appState.chatHistory.push({role:'ai', content:responseText, patch:patchDescription});
+    renderChatMessages();
+    saveState();
+  }).catch(function(e) {
+    removeTypingIndicator();
+    appState.chatHistory.push({role:'ai', content:'Error: '+e.message});
+    renderChatMessages();
+  }).finally(function() {
+    if (sendBtn) sendBtn.disabled = false;
+  });
+}
+
+function applyPatch(patch) {
+  var type = patch.type, data = patch.data;
+  if (type === 'updateDinner') { appState.overrides['dinner_'+data.day] = data; saveState(); return DAY_NAMES[data.day]+' dinner updated to '+data.name; }
+  if (type === 'updateLunch') { appState.overrides['lunch'] = data; saveState(); return 'Lunch updated to '+data.name; }
+  if (type === 'updateExercise') {
+    var k = 'workout_'+data.split;
+    if (!appState.overrides[k]) appState.overrides[k] = {};
+    appState.overrides[k][data.index] = data; saveState();
+    return data.split+' exercise '+(data.index+1)+' changed to '+data.name;
+  }
+  return null;
+}
+
+function callClaude(prompt, system) {
+  if (!appState.apiKey) { alert('Set your API key in the More tab first.'); return Promise.reject(new Error('No API key')); }
+  return fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','x-api-key':appState.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-iap':'true'},
+    body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1000, system:system||'', messages:[{role:'user',content:prompt}]})
+  }).then(function(res) {
+    return res.json().then(function(data) {
+      if (!res.ok) throw new Error(data.error && data.error.message ? data.error.message : 'API error '+res.status);
+      return data.content && data.content[0] ? data.content[0].text || '' : '';
+    });
+  });
+}
+
+function openSwap(ingredient, mealName) {
+  openModal('Swap: '+ingredient);
+  document.getElementById('modal-body').innerHTML = '<div class="ai-loading">Finding alternatives…</div>';
+  callClaude(
+    'I\'m on 75 Hard, 3000 cal/day, 190g protein. Making "'+mealName+'" and don\'t want "'+ingredient+'". 3 swap suggestions, available at Canadian grocery store. JSON only: [{"name":"...","why":"...","tip":"..."}]',
+    'Return only valid JSON arrays. No markdown.'
+  ).then(function(text) {
+    var opts = JSON.parse(text.trim());
+    var html = '<p style="font-size:12px;color:var(--muted);margin-bottom:16px;font-family:monospace">Tap to dismiss</p>';
+    for (var i = 0; i < opts.length; i++) {
+      html += '<div class="ai-option" onclick="closeModal()">'
+        + '<div class="ai-option-name">'+opts[i].name+'</div>'
+        + '<div class="ai-option-why">'+opts[i].why+'</div>'
+        + (opts[i].tip ? '<div style="font-size:11px;color:var(--gold);margin-top:4px;font-family:monospace">'+opts[i].tip+'</div>' : '')
+        + '</div>';
+    }
+    document.getElementById('modal-body').innerHTML = html;
+  }).catch(function(e) {
+    document.getElementById('modal-body').innerHTML = '<div style="color:var(--accent);font-family:monospace;font-size:12px;padding:20px;text-align:center">Error: '+e.message+'</div>';
+  });
+}
+
+function generateWeek(weekNum) {
+  var notes = document.getElementById('gen-notes') ? document.getElementById('gen-notes').value : '';
+  localStorage.setItem('hd_genNotes', notes);
+  var btn = document.getElementById('gen-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Generating…'; }
+  document.getElementById('gen-result').innerHTML = '<div class="ai-loading" style="padding:30px">Generating Week '+weekNum+'…<br>~10 seconds</div>';
+  callClaude(
+    'Generate a 7-day meal plan for Week '+weekNum+' of a 75 Hard challenge. User: 22yo male, 6\'4", Winnipeg Canada, 3000 cal/day, 190g+ protein. Korean/Thai/Japanese/Mediterranean. Simple lunch (protein+carb+veg, prepped Sunday), varied dinners. Confident cook. No cottage cheese, boiled eggs, ground turkey. Lots of volume. Week '+(weekNum-1)+' notes: "'+notes+'". Return JSON only: {"weekTheme":"...","lunch":{"name":"...","description":"..."},"dinners":[{"day":"Monday","name":"...","description":"...","cuisine":"..."},...],"prepNotes":"..."}',
+    'Return only valid JSON. No markdown.'
+  ).then(function(text) {
+    var plan = JSON.parse(text.trim());
+    appState.generatedWeeks[weekNum] = plan; saveState();
+    showGeneratedWeek(weekNum, plan);
+  }).catch(function(e) {
+    document.getElementById('gen-result').innerHTML = '<div style="padding:16px;color:var(--accent);font-family:monospace;font-size:12px">Error: '+e.message+'</div>';
+  }).finally(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Generate Week '+weekNum+' with AI'; }
+  });
+}
+
+function showGeneratedWeek(weekNum, plan) {
+  var el = document.getElementById('gen-result');
+  if (!el) return;
+  var html = '<div style="padding:16px;border-top:1px solid var(--border)">'
+    + '<div class="section-label">Week '+weekNum+': '+plan.weekTheme+'</div>'
+    + '<div style="margin-bottom:14px"><div class="meal-label">Weekday Lunch</div>'
+    + '<div style="font-size:14px;margin-bottom:4px">'+plan.lunch.name+'</div>'
+    + '<div style="font-size:11px;color:var(--muted);line-height:1.5">'+plan.lunch.description+'</div></div>'
+    + '<div class="meal-label">Dinners</div>';
+  for (var i = 0; i < plan.dinners.length; i++) {
+    html += '<div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:8px">'
+      + '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+      + '<div style="font-size:13px">'+plan.dinners[i].day+' — '+plan.dinners[i].name+'</div>'
+      + '<span style="font-size:10px;font-family:monospace;color:var(--gold)">'+plan.dinners[i].cuisine+'</span></div>'
+      + '<div style="font-size:11px;color:var(--muted);line-height:1.5">'+plan.dinners[i].description+'</div></div>';
+  }
+  html += '<div style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:8px">'
+    + '<div class="meal-label">Prep Notes</div>'
+    + '<div style="font-size:12px;color:var(--muted);line-height:1.6">'+plan.prepNotes+'</div></div></div>';
+  el.innerHTML = html;
+}
+
+function openModal(title) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = '';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// INIT
+document.querySelectorAll('.nav-btn').forEach(function(btn) {
+  btn.addEventListener('click', function(){ navigate(btn.dataset.page); });
+});
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+document.getElementById('chat-send').addEventListener('click', sendChat);
+document.getElementById('chat-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+});
+document.getElementById('chat-input').addEventListener('input', function() {
+  this.style.height = '';
+  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+document.getElementById('header-date').textContent = formatDate();
+document.getElementById('day-badge').textContent = isPreStart() ? 'PREP DAY' : 'DAY ' + getDayNum();
+renderToday();
+</script>
+</body>
+</html>
